@@ -1,7 +1,8 @@
+Full MultiBound 3 source code is available at https://github.com/gammamonbiscuit/MultiBound3
 Full MultiBound 2 source code is available at https://github.com/zetaPRIME/MultiBound2
 
 ---
 
-Windows binary is statically linked to parts of Qt 5.
-License info for Qt 5: https://doc.qt.io/qt-5/lgpl.html
+Windows binary is statically linked to parts of Qt 6.
+License info for Qt 6: https://doc.qt.io/qt-6/lgpl.html
 Qt source code can be found on https://qt.io/
