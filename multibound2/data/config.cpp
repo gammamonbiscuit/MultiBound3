@@ -71,7 +71,7 @@ void MultiBound::Config::load() {
     openSBCIRoot = Util::splicePath(configPath, "/opensb-ci/");
     openSBDevRoot = Util::splicePath(configPath, "/opensb-dev/");
 
-    steamcmdDLRoot = configPath;
+    steamcmdDLRoot = Util::splicePath(configPath, "/steamcmd/");;
 
     QJsonObject cfg;
     if (QFile f(Util::splicePath(configPath, "/config.json")); f.exists()) {
