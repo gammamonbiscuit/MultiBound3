@@ -26,7 +26,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 DISTFILES += ../.astylerc
 
-CONFIG += c++17
+CONFIG += c++2b
 
 # use all optimizations that won't generally interfere with debugging
 QMAKE_CXXFLAGS_DEBUG += -Og

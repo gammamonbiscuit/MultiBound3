@@ -39,7 +39,7 @@ namespace {
 
 void MultiBound::Config::load() {
     // defaults
-    configPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation); // already has "multibound" attached
+    configPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation); // already has "multibound" attached
 #if defined(Q_OS_WIN)
     // same place as the exe on windows, like mb1
     if (QDir(QCoreApplication::applicationDirPath()).exists("config.json"))
@@ -53,7 +53,7 @@ void MultiBound::Config::load() {
     QSettings sreg(R"(HKEY_LOCAL_MACHINE\SOFTWARE\Valve\Steam)", QSettings::NativeFormat);
     QString steamPath = QDir::cleanPath(qs("C:/Program Files/Steam"));
 #endif
-    if (auto ip = sreg.value("InstallPath"); ip.type() == QVariant::String && !ip.isNull()) steamPath = QDir::cleanPath(ip.toString());
+    if (auto ip = sreg.value("InstallPath"); ip.typeId() == QVariant::String && !ip.isNull()) steamPath = QDir::cleanPath(ip.toString());
 
     if (isX64()) starboundPath = Util::splicePath(steamPath, "/SteamApps/common/Starbound/win64/starbound.exe");
     else starboundPath = Util::splicePath(steamPath, "/SteamApps/common/Starbound/win32/starbound.exe");

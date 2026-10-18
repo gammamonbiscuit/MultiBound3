@@ -75,10 +75,10 @@ QJsonObject& findEligibleRelease(bool forceRefresh = false) {
     auto ra = releaseInfo.array();
 
     // for now we assume releases are listed newest to oldest
-    foreach (const auto& rv, ra) {
+    for (const auto& rv : ra) {
         auto r = rv.toObject();
         // loop through assets to find the one we want
-        foreach (const auto& av, r[qs("assets")].toArray()) {
+        for (const auto& av : r[qs("assets")].toArray()) {
             auto a = av.toObject();
             if (a[qs("name")] == pkgAssetName) {
                 eligibleRelease = r;
@@ -203,7 +203,7 @@ void MultiBound::Util::openSBUpdateCI() {
     auto runs = QJsonDocument::fromJson(reply->readAll()).object()["workflow_runs"].toArray();
 
     QJsonObject ri;
-    foreach (const auto& rv, runs) {
+    for (const auto& rv : runs) {
         auto r = rv.toObject();
 
         qDebug() << "run entry" << r["name"].toString();

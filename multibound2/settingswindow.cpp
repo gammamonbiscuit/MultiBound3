@@ -32,7 +32,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
 
     // and some interactions
     ui->steamcmdUpdateSteamMods->setEnabled(ui->steamcmdEnabled->isChecked());
-    connect(ui->steamcmdEnabled, &QCheckBox::stateChanged, this, [this] {
+    connect(ui->steamcmdEnabled, &QCheckBox::checkStateChanged, this, [this] {
         ui->steamcmdUpdateSteamMods->setEnabled(ui->steamcmdEnabled->isChecked());
     });
 
