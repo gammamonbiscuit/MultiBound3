@@ -1,5 +1,5 @@
 # MultiBound 3 // Starbound Instance Launcher
-This is a fork of [zetaPRIME/MultiBound2](https://github.com/zetaPRIME/MultiBound2), and the only purpose is fixing incompatibilities with modern versions of steamcmd and openStarbound, there will be no features. ~~Okay I made it Qt 6 too, it comes with native dark mode, but I won't add a switch for that!~~ This fork is very likely Windows-only, I don't even test if it builds in Linux and macOS. As usual, there is no support.
+This is a fork of [zetaPRIME/MultiBound2](https://github.com/zetaPRIME/MultiBound2), and the only purpose is fixing incompatibilities with modern versions of steamcmd and openStarbound, there will be no new features. ~~Okay I made it Qt 6 too, it comes with native dark mode, but I won't add a switch for that!~~ This fork is very likely Windows-only, I don't even test if it builds in Linux and macOS. As usual, there is no support.
 
 ## To-do list
 - [x] Fix workshop download location mismatch error
