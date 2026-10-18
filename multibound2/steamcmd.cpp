@@ -177,14 +177,14 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
     dls << endcap;
     dls.flush();
 
-    QString scriptPath = QDir(Config::steamcmdDLRoot).filePath("steamcmd.txt");
+    QString scriptPath = QDir(Config::configPath).filePath("steamcmd.txt");
     {
         QFile sf(scriptPath);
         sf.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
         (QTextStream(&sf)) << wsScript;
         sf.close();
     }
-    QString scriptPath2 = QDir(Config::steamcmdDLRoot).filePath("steamcmd2.txt");
+    QString scriptPath2 = QDir(Config::configPath).filePath("steamcmd2.txt");
     {
         QFile sf(scriptPath2);
         sf.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text);
