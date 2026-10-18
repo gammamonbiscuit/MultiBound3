@@ -1,3 +1,16 @@
+# MultiBound 3 // Starbound Instance Launcher
+This is a fork of [zetaPRIME/MultiBound2](https://github.com/zetaPRIME/MultiBound2), and the only purpose is fixing incompatibilities with modern versions of steamcmd and openStarbound, there will be no features. ~~Okay I made it Qt 6 too, it comes with native dark mode, but I won't add a switch for that!~~ This fork is very likely Windows-only, I don't even test if it builds in Linux and macOS. As usual, there is no support.
+
+## To-do list
+- [x] Fix workshop download location mismatch error
+- [ ] Fix openStarbound CI build download (Windows only, osb no longer offers `.zip` for Linux and macOS, and this is not supported by nightly.link)
+- [ ] Fix openStarbound release version download
+
+## Original README
+Here's the original readme if you want to know how to use MultiBound.
+<details>
+<summary>Click to expand</summary>
+
 # MultiBound 2 // Starbound Instance Launcher
 MultiBound enables you to quickly and easily set up and use multiple separate instances (or profiles) of Starbound with their own mod list and save directory.
 
@@ -19,3 +32,5 @@ Make sure you have:
 - Up to date QtCreator
 
 Open up the project and build like you would any other Qt application, configuring with the "Desktop" kit.
+
+</details>
