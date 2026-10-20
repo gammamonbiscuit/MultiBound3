@@ -3,8 +3,8 @@ This is a fork of [zetaPRIME/MultiBound2](https://github.com/zetaPRIME/MultiBoun
 
 ## To-do list
 - [x] Fix workshop download location mismatch error
-- [x] Fix OpenStarbound CI build download (Windows only, osb no longer offers `.zip` for Linux and macOS, and this is not supported by nightly.link).<br />It now requires [tar](https://devblogs.microsoft.com/commandline/tar-and-curl-come-to-windows/) or [PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows)
-- [x] Fix OpenStarbound release version download<br />It now requires [tar](https://devblogs.microsoft.com/commandline/tar-and-curl-come-to-windows/) or [PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows)
+- [x] Fix OpenStarbound CI build download (Windows only, osb no longer offers `.zip` for Linux and macOS, and this is not supported by nightly.link), requires [PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows)
+- [x] Fix OpenStarbound release version download, requires [PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows)
 - [ ] Fix OpenStarbound asset path, they switched to `assets` since forever, but I might need a fallback incase someone drop-in updates from MultiBound 2
 
 ## Original README

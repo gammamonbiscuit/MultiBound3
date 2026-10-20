@@ -125,30 +125,19 @@ bool MultiBound::Util::openSBWindowsExtract(const QString& zipPath, const QStrin
     QProcess ps;
     QObject::connect(&ps, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), &ev, &QEventLoop::quit);
     QDir dst(destDir);
-    // extract using tar or powershell 7
-    auto tar  = QStandardPaths::findExecutable("tar");
+    // extract using powershell 7
     auto pwsh = QStandardPaths::findExecutable("pwsh");
     const QString exe = dst.absoluteFilePath("client_distribution/win/starbound.exe");
 
-    if (!tar.isEmpty()) {
-        qDebug() << "tar start";
-        ps.start(tar, QStringList() << "-xf" << zipPath << "-C" << destDir);
-        ev.exec();
-        qDebug() << "tar end" << ps.exitCode(); // fuck you for return 1 on success
+    if (pwsh.isEmpty()) {
+        QMessageBox::critical(nullptr, "", "Extraction failed. Install PowerShell 7 (pwsh).");
+        return false;
     }
-
-    qDebug() << "exe" << QFileInfo::exists(exe);
-    if (!QFileInfo::exists(exe)) {
-        if (pwsh.isEmpty()) {
-            QMessageBox::critical(nullptr, "", "Extraction failed. Install PowerShell 7 (pwsh).");
-            return false;
-        }
-        qDebug() << "pwsh start";
-        const QString pc = QString("Expand-Archive -Force -DestinationPath '%1' -LiteralPath '%2'").arg(destDir, zipPath);
-        ps.start(pwsh, QStringList() << "-NoProfile" << "-NonInteractive" << "-Command" << pc);
-        ev.exec();
-        qDebug() << "pwsh end" << ps.exitCode();
-    }
+    qDebug() << "pwsh start";
+    const QString pc = QString("Expand-Archive -Force -DestinationPath '%1' -LiteralPath '%2'").arg(destDir, zipPath);
+    ps.start(pwsh, QStringList() << "-NoProfile" << "-NonInteractive" << "-Command" << pc);
+    ev.exec();
+    qDebug() << "pwsh end" << ps.exitCode();
 
     qDebug() << "exe" << QFileInfo::exists(exe);
     if (!QFileInfo::exists(exe)) {
