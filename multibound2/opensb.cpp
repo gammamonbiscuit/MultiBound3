@@ -128,15 +128,17 @@ bool MultiBound::Util::openSBWindowsExtract(const QString& zipPath, const QStrin
     // extract using tar or powershell 7
     auto tar  = QStandardPaths::findExecutable("tar");
     auto pwsh = QStandardPaths::findExecutable("pwsh");
+    const QString exe = dst.absoluteFilePath("client_distribution/win/starbound.exe");
+
     if (!tar.isEmpty()) {
         qDebug() << "tar start";
         ps.start(tar, QStringList() << "-xf" << zipPath << "-C" << destDir);
         ev.exec();
         qDebug() << "tar end" << ps.exitCode(); // fuck you for return 1 on success
     }
-    const bool exe = QFileInfo::exists(dst.absoluteFilePath("client_distribution/win/starbound.exe"));
-    qDebug() << "exe" << exe;
-    if (!exe) {
+
+    qDebug() << "exe" << QFileInfo::exists(exe);
+    if (!QFileInfo::exists(exe)) {
         if (pwsh.isEmpty()) {
             QMessageBox::critical(nullptr, "", "Extraction failed. Install PowerShell 7 (pwsh).");
             return false;
@@ -147,9 +149,16 @@ bool MultiBound::Util::openSBWindowsExtract(const QString& zipPath, const QStrin
         ev.exec();
         qDebug() << "pwsh end" << ps.exitCode();
     }
+
+    qDebug() << "exe" << QFileInfo::exists(exe);
+    if (!QFileInfo::exists(exe)) {
+        QMessageBox::critical(nullptr, "", "Extraction failed. Client archive could not be extracted.");
+        return false;
+    }
+
     QDir wd(destDir);
     if (!wd.cd("client_distribution")) {
-        QMessageBox::critical(nullptr, "", "Extraction failed. Unexpected archive layout.");
+        QMessageBox::critical(nullptr, "", "Extraction failed. starbound.exe exists but somehow failed to access client_distribution?!");
         return false;
     }
     qDebug() << "move assets";
