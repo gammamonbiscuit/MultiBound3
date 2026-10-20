@@ -34,7 +34,7 @@ namespace { // clazy:excludeall=non-pod-global-static
 
     // os-specific things
 #if defined(Q_OS_WIN)
-    const auto pkgAssetName = qs("win_opensb.zip");
+    const auto pkgAssetName = qs("OpenStarbound-Windows-Client.zip");
     const auto ciPlatform = qs("Windows");
     const auto ciArtifact = qs("OpenStarbound-Windows-Client.zip");
 #elif defined (Q_OS_MACOS)
@@ -121,6 +121,50 @@ void MultiBound::Util::openSBCheckForUpdates() {
     }
 }
 
+bool MultiBound::Util::openSBWindowsExtract(const QString& zipPath, const QString& destDir) {
+    QProcess ps;
+    QObject::connect(&ps, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), &ev, &QEventLoop::quit);
+    QDir dst(destDir);
+    // extract using tar or powershell 7
+    auto tar  = QStandardPaths::findExecutable("tar");
+    auto pwsh = QStandardPaths::findExecutable("pwsh");
+    if (!tar.isEmpty()) {
+        qDebug() << "tar start";
+        ps.start(tar, QStringList() << "-xf" << zipPath << "-C" << destDir);
+        ev.exec();
+        qDebug() << "tar end" << ps.exitCode(); // fuck you for return 1 on success
+    }
+    const bool exe = QFileInfo::exists(dst.absoluteFilePath("client_distribution/win/starbound.exe"));
+    qDebug() << "exe" << exe;
+    if (!exe) {
+        if (pwsh.isEmpty()) {
+            QMessageBox::critical(nullptr, "", "Extraction failed. Install PowerShell 7 (pwsh).");
+            return false;
+        }
+        qDebug() << "pwsh start";
+        const QString pc = QString("Expand-Archive -Force -DestinationPath '%1' -LiteralPath '%2'").arg(destDir, zipPath);
+        ps.start(pwsh, QStringList() << "-NoProfile" << "-NonInteractive" << "-Command" << pc);
+        ev.exec();
+        qDebug() << "pwsh end" << ps.exitCode();
+    }
+    QDir wd(destDir);
+    if (!wd.cd("client_distribution")) {
+        QMessageBox::critical(nullptr, "", "Extraction failed. Unexpected archive layout.");
+        return false;
+    }
+    qDebug() << "move assets";
+    wd.rename("assets", dst.absoluteFilePath("data"));
+    wd.cd("win");
+    foreach (auto fn, wd.entryList(QDir::Files)) {
+        qDebug() << "move" << fn;
+        wd.rename(fn, dst.absoluteFilePath(fn));
+    }
+    wd.setPath(dst.absoluteFilePath("client_distribution"));
+    if (wd.exists()) wd.removeRecursively();
+    return true;
+}
+
+
 void MultiBound::Util::openSBUpdate() {
     findEligibleRelease();
     if (eligibleRelease.isEmpty()) return; // nothing
@@ -157,9 +201,7 @@ void MultiBound::Util::openSBUpdate() {
     QObject::connect(&ps, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), &ev, &QEventLoop::quit);
 
 #if defined(Q_OS_WIN)
-    // powershell is weird but guaranteed to be there
-    ps.start("powershell", QStringList() << "Expand-Archive" << "-DestinationPath" << osbd.absolutePath() << "-LiteralPath" << f.fileName());
-    ev.exec();
+    if (!openSBWindowsExtract(f.fileName(), osbd.absolutePath())) return;
 #else
     // if you're running a desktop without unzip, huh???
     ps.start("unzip", QStringList() << f.fileName() << "-d" << osbd.absolutePath());
@@ -286,44 +328,7 @@ void MultiBound::Util::openSBUpdateCI() {
 
     QDir wd(cid.absolutePath()); // working dir
 #if defined(Q_OS_WIN) // oh boy, platform implementation time
-    // extract using tar or powershell 7, move everything in /client_distribution/win/ to /, remove /client_distribution/
-    auto tar = QStandardPaths::findExecutable("tar");
-    auto pwsh = QStandardPaths::findExecutable("pwsh");
-    if (!tar.isEmpty()) {
-        qDebug() << "tar start";
-        ps.start(tar, QStringList() << "-xf" << f.fileName() << "-C" << cid.absolutePath());
-        ev.exec();
-        qDebug() << "tar end" << ps.exitCode(); // fuck you for return 1 on success
-    }
-
-    const bool exe = QFileInfo::exists(cid.absoluteFilePath("client_distribution/win/starbound.exe"));
-    qDebug() << "exe" << exe;
-    if (!exe) {
-        if (pwsh.isEmpty()) {
-            QMessageBox::critical(nullptr, "", "Extraction failed. Install PowerShell 7 (pwsh).");
-            return;
-        }
-        qDebug() << "pwsh start";
-        const QString pc = QString("Expand-Archive -Force -DestinationPath '%1' -LiteralPath '%2'").arg(cid.absolutePath(), f.fileName());
-        ps.start(pwsh, QStringList() << "-NoProfile" << "-NonInteractive" << "-Command" << pc);
-        ev.exec();
-        qDebug() << "pwsh end" << ps.exitCode();
-    }
-
-    updateStatus("");
-    if (!wd.cd("client_distribution")) {
-        QMessageBox::critical(nullptr, "", "Extraction failed. Unexpected archive layout.");
-        return;
-    }
-    qDebug() << "move assets";
-    wd.rename("assets", cid.absoluteFilePath("data"));
-    wd.cd("win");
-    foreach (auto fn, wd.entryList(QDir::Files)) {
-        qDebug() << "move" << fn;
-        wd.rename(fn, cid.absoluteFilePath(fn));
-    }
-    wd.setPath(cid.absoluteFilePath("client_distribution"));
-    if (wd.exists()) wd.removeRecursively();
+    if (!openSBWindowsExtract(f.fileName(), cid.absolutePath())) return;
     // super easy (not anymore)
 #else // unix, probably linux
     // extract with unzip, untar, move assets out, move everything in linux to root, then nuke client_distribution
@@ -360,16 +365,5 @@ void MultiBound::Util::openSBUpdateCI() {
         f.close();
     }
 
-
-
-
-
-
-
-
-
-
-
-
-    //
+    updateStatus("");
 }

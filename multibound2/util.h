@@ -39,5 +39,6 @@ namespace MultiBound {
         void openSBCheckForUpdates();
         void openSBUpdate();
         void openSBUpdateCI();
+        bool openSBWindowsExtract(const QString& zipPath, const QString& destDir);
     }
 }
