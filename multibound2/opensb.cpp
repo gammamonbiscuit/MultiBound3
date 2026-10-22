@@ -151,7 +151,7 @@ bool MultiBound::Util::openSBWindowsExtract(const QString& zipPath, const QStrin
         return false;
     }
     qDebug() << "move assets";
-    wd.rename("assets", dst.absoluteFilePath("data"));
+    wd.rename("assets", dst.absoluteFilePath("assets"));
     wd.cd("win");
     foreach (auto fn, wd.entryList(QDir::Files)) {
         qDebug() << "move" << fn;

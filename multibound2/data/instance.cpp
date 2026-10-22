@@ -109,7 +109,14 @@ bool Instance::launch() {
         QJsonArray assets;
         assets.append(evaluatePath("sb:/assets/"));
         if (useOSB) {
-            assets.append(Util::splicePath(osbRoot, "/data/"));
+            QDir dd(Util::splicePath(osbRoot, "/data/"));
+            if (dd.exists()) {
+                qDebug() << "assets dir=data";
+                assets.append(dd.absolutePath());
+            } else {
+                qDebug() << "assets dir=assets";
+                assets.append(Util::splicePath(osbRoot, "/assets/"));
+            }
         }
 
         QSet<QString> workshop;
