@@ -72,15 +72,19 @@ bool Instance::launch() {
 #endif
     bool useOSB = Config::openSBEnabled;
     auto osbRoot = Config::openSBRoot;
-    if (Config::openSBUseCIBuild && QDir(Config::openSBCIRoot).exists(osbBinary)) {
-        osbRoot = Config::openSBCIRoot;
-    } else {
-        QMessageBox::critical(nullptr, "", "Configured 'Use CI/nightly build' but installation not found, fallback to next possible choice.");
+    if (Config::openSBUseCIBuild) {
+        if (QDir(Config::openSBCIRoot).exists(osbBinary)) {
+            osbRoot = Config::openSBCIRoot;
+        } else {
+            QMessageBox::critical(nullptr, "", "Configured 'Use CI/nightly build' but installation not found, fallback to next possible choice.");
+        }
     }
-    if (Config::openSBUseDevBranch && QDir(Config::openSBDevRoot).exists(osbBinary)) {
-        osbRoot = Config::openSBDevRoot;
-    } else {
-        QMessageBox::critical(nullptr, "", "Configured 'Use development copy (manual)' but installation not found, fallback to next possible choice.");
+    if (Config::openSBUseDevBranch) {
+        if (QDir(Config::openSBDevRoot).exists(osbBinary)) {
+            osbRoot = Config::openSBDevRoot;
+        } else {
+            QMessageBox::critical(nullptr, "", "Configured 'Use development copy (manual)' but installation not found, fallback to next possible choice.");
+        }
     }
     if (!QDir(osbRoot).exists(osbBinary)) {
         useOSB = false;
