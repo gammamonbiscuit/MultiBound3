@@ -2,23 +2,23 @@
 This is a fork of [zetaPRIME/MultiBound2](https://github.com/zetaPRIME/MultiBound2), and the only purpose is fixing incompatibilities with modern versions of steamcmd and OpenStarbound, there will be no new features. ~~Okay I made it Qt 6 too, it comes with native dark mode, but I won't add a switch for that!~~ **This fork is Windows-only**, I don't even test if it builds in Linux and macOS, and the corresponding parts are left untouched. As usual, there is no support.
 
 ## Bugs fixed
-- **Workshop download location mismatch**
+- **Workshop download location mismatch** `0.6.4`
 <br />An update of steamcmd around December 2025 changed steamcmd's behaviour that it no longer allows the install path being the same as its install folder. steamcmd would show the error message `Please set the game install path to something other than the Steam install folder` and fallback to default path, users have to use symlink as workaround. MultiBound 3 fixes it by using that default path directly.
 
-- **OpenStarbound CI build download**
+- **OpenStarbound CI build download** `0.6.4`
 <br />The original workflow name check no longer matches what MultiBound expects, removed it and added some new checks like only use a successful build. Also OpenStarbound [now uses Deflate64 to compress their artifacts](https://github.com/OpenStarbound/OpenStarbound/pull/534), zip archive named differently, and put all the files inside `client_distribution` folder. Updated the extraction part to handle all these changes. Requires the bundled `7za.exe`, or have [7-Zip](https://7-zip.org/download.html)/[PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows) installed.
 
-- **OpenStarbound release version download**
+- **OpenStarbound release version download** `0.6.4`
 <br />Same zip structural changes as above, so also have the same extractor requirements.
 
 ## Non bug-fix changes
-- **Upgraded to Qt 6**
+- **Upgraded to Qt 6** `0.6.4`
 <br />Because I happened to only have Qt 6 installed, and didn't bother to add Qt 5. Replaced some deprecated code. It has native dark mode.
 
-- **OpenStarbound asset path**
+- **OpenStarbound asset path** `0.6.4`
 <br />Not really a bug, but they switched to `assets` since forever, so I changed it too. Added a fallback so that if an OpenStarbound install created by MultiBound 2 has `data` in it, MultiBound 3 will use it instead.
 
-- **Warning messages when a selected OpenStarbound variant doesn't exist**
+- **Warning messages when a selected OpenStarbound variant doesn't exist** `0.6.4`
 <br />MultiBound 2 would already fallback to other possible choice, I just added a warning message when that happens.
 
 
