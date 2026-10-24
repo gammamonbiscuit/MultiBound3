@@ -6,10 +6,10 @@ This is a fork of [zetaPRIME/MultiBound2](https://github.com/zetaPRIME/MultiBoun
 <br />An update of steamcmd around December 2025 changed steamcmd's behaviour that it no longer allows the install path being the same as its install folder. steamcmd would show the error message `Please set the game install path to something other than the Steam install folder` and fallback to default path, users have to use symlink as workaround. MultiBound 3 fixes it by using that default path directly.
 
 - **OpenStarbound CI build download**
-<br />The original workflow name check no longer matches what MultiBound expects, removed it and added some new checks like only use a successful build. Also OpenStarbound [now uses Deflate64 to compress their artifacts](https://github.com/OpenStarbound/OpenStarbound/pull/534), zip archive named differently, and put all the files inside `client_distribution` folder. Updated the extraction part to handle all these changes. As this moment this fix requires [PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows) installed.
+<br />The original workflow name check no longer matches what MultiBound expects, removed it and added some new checks like only use a successful build. Also OpenStarbound [now uses Deflate64 to compress their artifacts](https://github.com/OpenStarbound/OpenStarbound/pull/534), zip archive named differently, and put all the files inside `client_distribution` folder. Updated the extraction part to handle all these changes. Requires the bundled `7za.exe`, or have [7-Zip](https://7-zip.org/download.html)/[PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows) installed.
 
 - **OpenStarbound release version download**
-<br />Same zip structural changes as above, so also requires [PowerShell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows).
+<br />Same zip structural changes as above, so also have the same extractor requirements.
 
 ## Non bug-fix changes
 - **Upgraded to Qt 6**
