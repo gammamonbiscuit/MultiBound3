@@ -3,6 +3,13 @@ Full MultiBound 2 source code is available at https://github.com/zetaPRIME/Multi
 
 ---
 
-Windows binary is statically linked to parts of Qt 6.
-License info for Qt 6: https://doc.qt.io/qt-6/lgpl.html
-Qt source code can be found on https://qt.io/
+MultiBound 3 bundles 7-Zip version 26.05 as 7za.exe for extracting client archives.
+SHA256: 357929ec748d00728c64dd2e7aa0069258f40847c1410014bb60d22eb9ec75d5
+License: https://7-zip.org/license.txt
+Source code: https://github.com/ip7z/7zip/releases/tag/26.05
+
+---
+
+MultiBound 3 Windows binary is statically linked to parts of Qt 6.
+License: https://doc.qt.io/qt-6/lgpl.html
+Source code: https://qt.io/

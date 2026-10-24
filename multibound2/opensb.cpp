@@ -18,7 +18,7 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QStandardPaths>
-
+#include <QCoreApplication>
 
 // QDateTime::fromString(str, Qt::ISODate)
 
@@ -124,24 +124,66 @@ void MultiBound::Util::openSBCheckForUpdates() {
 bool MultiBound::Util::openSBWindowsExtract(const QString& zipPath, const QString& destDir) {
     QProcess ps;
     QObject::connect(&ps, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), &ev, &QEventLoop::quit);
+    QObject::connect(&ps, &QProcess::errorOccurred, &ev, &QEventLoop::quit);
     QDir dst(destDir);
-    // extract using powershell 7
+    // some checks
+    auto canRun = [](const QString &path) {
+        return !path.isEmpty() && QFileInfo(path).isExecutable();
+    };
+    auto peOk = [](const QString &path) {
+        QFile f(path);
+        return f.open(QFile::ReadOnly) && f.read(2) == "MZ";
+    };
+    // extract using 7za, 7z, or powershell 7
     auto pwsh = QStandardPaths::findExecutable("pwsh");
+    qDebug() << "pwsh=" << pwsh;
+    auto sevenzip = QStandardPaths::findExecutable("7z");
+    qDebug() << "7z=" << sevenzip;
+    QString sevenzipa = QDir(QCoreApplication::applicationDirPath()).absoluteFilePath("7za.exe");
+    if (!QFileInfo::exists(sevenzipa)) {
+        sevenzipa = QStandardPaths::findExecutable("7za");
+    }
+    qDebug() << "7za=" << sevenzipa;
     const QString exe = dst.absoluteFilePath("client_distribution/win/starbound.exe");
 
-    if (pwsh.isEmpty()) {
-        QMessageBox::critical(nullptr, "", "Extraction failed. Install PowerShell 7 (pwsh).");
+    if (!(canRun(pwsh) || canRun(sevenzip) || canRun(sevenzipa))) {
+        QMessageBox::critical(nullptr, "", "Extraction failed. The bundled extractor 7za.exe is missing and no 7-Zip or PowerShell 7 was found.");
         return false;
     }
-    qDebug() << "pwsh start";
-    const QString pc = QString("Expand-Archive -Force -DestinationPath '%1' -LiteralPath '%2'").arg(destDir, zipPath);
-    ps.start(pwsh, QStringList() << "-NoProfile" << "-NonInteractive" << "-Command" << pc);
-    ev.exec();
-    qDebug() << "pwsh end" << ps.exitCode();
 
-    qDebug() << "exe" << QFileInfo::exists(exe);
-    if (!QFileInfo::exists(exe)) {
-        QMessageBox::critical(nullptr, "", "Extraction failed. Client archive could not be extracted.");
+    if (!peOk(exe)) {
+        if (canRun(sevenzipa)) {
+            qDebug() << "7za start";
+            ps.start(sevenzipa, QStringList() << "x" << zipPath << "-o" + destDir << "-y");
+            ev.exec();
+            qDebug() << "7za end" << ps.exitCode();
+        }
+        qDebug() << "exe" << peOk(exe);
+    }
+
+    if (!peOk(exe)) {
+        if (canRun(sevenzip)) {
+            qDebug() << "7z start";
+            ps.start(sevenzip, QStringList() << "x" << zipPath << "-o" + destDir << "-y");
+            ev.exec();
+            qDebug() << "7z end" << ps.exitCode();
+        }
+        qDebug() << "exe" << peOk(exe);
+    }
+
+    if (!peOk(exe)) {
+        if (canRun(pwsh)) {
+            qDebug() << "pwsh start";
+            const QString pc = QString("Expand-Archive -Force -DestinationPath '%1' -LiteralPath '%2'").arg(destDir, zipPath);
+            ps.start(pwsh, QStringList() << "-NoProfile" << "-NonInteractive" << "-Command" << pc);
+            ev.exec();
+            qDebug() << "pwsh end" << ps.exitCode();
+        }
+        qDebug() << "exe" << peOk(exe);
+    }
+
+    if (!peOk(exe)) {
+        QMessageBox::critical(nullptr, "", "Extraction failed. starbound.exe not found or corrupted.");
         return false;
     }
 
