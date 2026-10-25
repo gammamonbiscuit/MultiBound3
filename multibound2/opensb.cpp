@@ -192,9 +192,30 @@ bool MultiBound::Util::openSBWindowsExtract(const QString& zipPath, const QStrin
         QMessageBox::critical(nullptr, "", "Extraction failed. starbound.exe exists but somehow failed to access client_distribution?!");
         return false;
     }
+
     qDebug() << "move assets";
-    wd.rename("assets", dst.absoluteFilePath("assets"));
-    wd.cd("win");
+    if (!wd.rename("assets", dst.absoluteFilePath("assets"))) {
+        QMessageBox::critical(nullptr, "", "Extraction failed. Failed to move assets folder.");
+        return false;
+    }
+
+    qDebug() << "move feature mods";
+    if (wd.exists("mods")) {
+        QDir md(wd.absoluteFilePath("mods"));
+        QDir ad(dst.absoluteFilePath("assets"));
+        foreach (auto mf, md.entryList(QStringList() << "*.pak", QDir::Files)) {
+            qDebug() << "move mod" << mf;
+            if (!QFile::rename(md.absoluteFilePath(mf), ad.absoluteFilePath(mf))) {
+                qDebug() << "failed to move mod" << mf;
+            }
+        }
+    }
+
+    if (!wd.cd("win")) {
+        QMessageBox::critical(nullptr, "", "Extraction failed. Missing win folder, this really shouldn't happen...");
+        return false;
+    }
+
     foreach (auto fn, wd.entryList(QDir::Files)) {
         qDebug() << "move" << fn;
         wd.rename(fn, dst.absoluteFilePath(fn));
