@@ -347,7 +347,9 @@ void MultiBound::Util::openSBUpdateCI() {
         QMessageBox::critical(nullptr, "", "No matching artifacts found.");
         return;
     } else {
-        auto res = QMessageBox::question(nullptr, "", QString("Build #%1 (%2): %3").arg(ri["run_number"].toVariant().toString(), ri["head_sha"].toString().left(7), ri["display_title"].toString()), "Install", "Cancel");
+        auto ud = QDateTime::fromString(ri["updated_at"].toString(), Qt::ISODate);
+        auto udl = QLocale::system().toString(ud.toLocalTime(), QLocale::ShortFormat);
+        auto res = QMessageBox::question(nullptr, "", QString("Build #%1 on %4 (%2): %3").arg(ri["run_number"].toVariant().toString(), ri["head_sha"].toString().left(7), ri["display_title"].toString(), udl), "Install", "Cancel");
         qDebug() << "prompt returned" << res;
         if (res != 0) return;
     }
