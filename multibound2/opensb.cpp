@@ -110,10 +110,11 @@ void MultiBound::Util::openSBCheckForUpdates() {
     auto cd = QDateTime::fromString(currentRelease["published_at"].toString(), Qt::ISODate);
     if (ed > cd) { // eligible is newer (or more extant) than current, prompt to update
         auto ver = eligibleRelease["name"].toString();
+        auto edl = QLocale::system().toString(ed.toLocalTime(), QLocale::ShortFormat);
         if (ver.isEmpty()) ver = eligibleRelease["tag_name"].toString();
         if (ver.isEmpty()) ver = "unknown";
 
-        auto res = QMessageBox::information(nullptr, "OpenStarbound update", QString("A new version of OpenStarbound (%1) is available. Would you like to install it?").arg(ver), QMessageBox::Yes, QMessageBox::No);
+        auto res = QMessageBox::information(nullptr, "OpenStarbound update", QString("A new version of OpenStarbound (%1, %2) is available.\nWould you like to install it?").arg(ver, edl), QMessageBox::Yes, QMessageBox::No);
         if (res == QMessageBox::Yes) {
             openSBUpdate();
         }
