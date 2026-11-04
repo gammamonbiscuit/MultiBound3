@@ -1,0 +1,168 @@
+name: windows-static
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  QT_VER_MAJOR: "6"
+  QT_VER_MINOR: "12"
+  QT_VER_PATCH: "0"
+  LLVM_MINGW_TAG: "20261020" # From https://github.com/mstorsjo/llvm-mingw/releases
+  SEVENZIP_URL: https://github.com/ip7z/7zip/releases/download/26.05/7z2605-extra.7z
+  SEVENZIP_SHA256: 357929ec748d00728c64dd2e7aa0069258f40847c1410014bb60d22eb9ec75d5
+  DRAFT_TAG: rolling
+  CACHE_REV: "1"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Version Text And File Names
+        shell: pwsh
+        run: |
+          $src = Get-Content multibound2\update.cpp -Raw
+          if ($src -notmatch 'MultiBound::Util::version\s*=\s*qs\("v?([0-9][^"]*)"\)') {
+            throw "Could not extract version from multibound2/update.cpp"
+          }
+          $ver = $Matches[1]
+          Write-Host "Extracted version: $ver"
+
+          Add-Content $env:GITHUB_ENV "VERSION=$ver"
+          Add-Content $env:GITHUB_ENV "NAME_WINDOWS=multibound3-$ver-windows"
+          Add-Content $env:GITHUB_ENV "NAME_OBJ=multibound3-$ver-objectfiles"
+          $qt = "$($env:QT_VER_MAJOR).$($env:QT_VER_MINOR).$($env:QT_VER_PATCH)"
+          Add-Content $env:GITHUB_ENV "QT_VER=$qt"
+          Add-Content $env:GITHUB_ENV "QT_SRC_URL=https://download.qt.io/official_releases/qt/$($env:QT_VER_MAJOR).$($env:QT_VER_MINOR)/$qt/single/qt-everywhere-src-$qt.zip"
+
+      # 7-Zip
+      - name: Get 7za.exe
+        shell: pwsh
+        run: |
+          curl -L -o 7z-extra.7z "$env:SEVENZIP_URL"
+          7z x 7z-extra.7z -o7z-extra
+          Copy-Item 7z-extra\7za.exe 7za.exe
+          $hash = (Get-FileHash -Algorithm SHA256 7za.exe).Hash
+          Write-Host "7za.exe sha256: $hash"
+          if ($hash -ne $env:SEVENZIP_SHA256) {
+            throw "7za.exe hash mismatch: expected $($env:SEVENZIP_SHA256), got $hash"
+          }
+
+      # MSYS2
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ucrt64
+          install: make
+          update: false
+
+      # LLVM-MinGW
+      - name: Cache LLVM-MinGW
+        id: lm
+        uses: actions/cache@v6
+        with:
+          path: D:\llvm-mingw
+          key: llvm-mingw-${{ env.LLVM_MINGW_TAG }}-${{ env.CACHE_REV }}
+
+      - name: Get LLVM-MinGW
+        if: steps.lm.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          curl -L -o lm.zip "https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_TAG }}/llvm-mingw-${{ env.LLVM_MINGW_TAG }}-ucrt-x86_64.zip"
+          7z x lm.zip -oD:\
+          Rename-Item "D:\llvm-mingw-${{ env.LLVM_MINGW_TAG }}-ucrt-x86_64" llvm-mingw
+
+      - name: Put LLVM-MinGW on PATH
+        shell: pwsh
+        run: Add-Content $env:GITHUB_PATH 'D:\llvm-mingw\bin'
+
+      # Static Qt
+      - name: Cache Static Qt
+        id: qt
+        uses: actions/cache@v6
+        with:
+          path: D:\Qt-static
+          key: qt-static-${{ env.QT_VER }}-${{ env.LLVM_MINGW_TAG }}-${{ env.CACHE_REV }}
+
+      - name: Build Static Qt
+        if: steps.qt.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          curl -L -o qt.zip "$env:QT_SRC_URL"
+          7z x qt.zip -oD:\
+          New-Item -ItemType Directory -Path D:\qt-build | Out-Null
+          Set-Location D:\qt-build
+          & "D:\qt-everywhere-src-$($env:QT_VER)\configure.bat" -prefix D:\Qt-static -static -static-runtime -release -opensource -confirm-license -submodules "qtbase,qtdeclarative" -nomake examples -nomake tests
+          cmake --build . --parallel $env:NUMBER_OF_PROCESSORS
+          cmake --install .
+
+      # MultiBound
+      - name: Build MultiBound
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path build | Out-Null
+          Set-Location build
+          & D:\Qt-static\bin\qmake.exe ..\multibound2\multibound2.pro
+          mingw32-make -j $env:NUMBER_OF_PROCESSORS release
+
+      # Package
+      - name: Package MultiBound
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist | Out-Null
+          Copy-Item build\release\multibound.exe dist\
+          Copy-Item 7za.exe dist\
+          Copy-Item LICENSE dist\
+          Copy-Item "Additional License Info.txt" dist\
+          $zip = "$($env:NAME_WINDOWS).zip"
+          7z a -tzip -mx9 $zip .\dist\*
+          Write-Host "Packaged $zip"
+
+      - name: Package Object Files For LGPL
+        shell: pwsh
+        run: |
+          $zip = "$($env:NAME_OBJ).zip"
+          7z a -tzip -mx9 $zip .\build\release\*.o .\build\release\object_script.multibound.Release
+          Write-Host "Packaged $zip"
+
+      - name: Upload release zip artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.NAME_WINDOWS }}
+          path: ${{ env.NAME_WINDOWS }}.zip
+          compression-level: 0
+
+      - name: Upload LGPL relink bundle artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.NAME_OBJ }}
+          path: ${{ env.NAME_OBJ }}.zip
+          compression-level: 0
+
+      # Rolling draft
+      - name: Update Rolling Draft Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view $env:DRAFT_TAG *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:DRAFT_TAG --draft --target $env:GITHUB_SHA --title "Rolling build" --notes "Automated rolling draft."
+          } else {
+            gh release edit $env:DRAFT_TAG --target $env:GITHUB_SHA   # keep target on the built commit!
+          }
+          $old = gh release view $env:DRAFT_TAG --json assets --jq '.assets[].name'
+          if ($old) {
+            $old | ForEach-Object { gh release delete-asset $env:DRAFT_TAG $_ -y }
+          }
+          gh release upload $env:DRAFT_TAG "$($env:NAME_WINDOWS).zip" "$($env:NAME_OBJ).zip" --clobber
+          gh release edit $env:DRAFT_TAG --notes "Automated rolling build of commit ${{ github.sha }} - [run #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
