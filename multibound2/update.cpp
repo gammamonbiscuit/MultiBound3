@@ -70,6 +70,12 @@ void MultiBound::Util::checkForUpdates() {
     // for now we assume releases are listed newest to oldest
     for (const auto& rv : ra) {
         auto r = rv.toObject();
+
+        // skip prereleases and drafts
+        if (r[qs("prerelease")].toBool() || r[qs("draft")].toBool()) {
+            continue;
+        }
+
         // loop through assets to find the one we want
         for (const auto& av : r[qs("assets")].toArray()) {
             auto a = av.toObject();
