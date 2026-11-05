@@ -23,7 +23,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDataStream>
-
+#include <QRegularExpression>
 #include <QSet>
 
 namespace { // clazy:excludeall=non-pod-global-static
@@ -128,6 +128,8 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
 
     QSet<QString> workshop;
     QSet<QString> workshopExclude;
+    QHash<QString, QString> workshopNames;
+    QHash<QString, bool> workshopSuccess;
 
     auto sources = json["assetSources"].toArray();
     for (auto s : sources) {
@@ -135,11 +137,21 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
             auto src = s.toObject();
             auto type = src["type"].toString();
             if (type == "mod") {
-                if (auto id = src["workshopId"]; id.isString()) workshop.insert(id.toString());
+                if (auto id = src["workshopId"]; id.isString()) {
+                    workshop.insert(id.toString());
+                    workshopNames.insert(id.toString(), src["friendlyName"].toString());
+                    qDebug() << "add" << id.toString() << src["friendlyName"].toString();
+                }
             } else if (type == "workshopAuto") {
-                if (auto id = src["id"]; id.isString()) workshop.insert(id.toString());
+                if (auto id = src["id"]; id.isString()) {
+                    workshop.insert(id.toString());
+                    workshopNames.insert(id.toString(), src["friendlyName"].toString());
+                    qDebug() << "add" << id.toString() << src["friendlyName"].toString();
+                }
             } else if (type == "workshopExclude") {
-                if (auto id = src["id"]; id.isString()) workshopExclude.insert(id.toString());
+                if (auto id = src["id"]; id.isString()) {
+                    workshopExclude.insert(id.toString());
+                }
             }
         }
     }
@@ -166,8 +178,16 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
     for (auto& id : workshop) {
         if (!workshopExclude.contains(id)) {
             if (ws && QDir(Config::workshopRoot).exists(id)) {
-                if (wsUpd) { wss << eh << id << qs(" validate\n"); wsc++; }
-            } else {dls << eh << id << qs(" validate\n"); wsc++; }
+                if (wsUpd) {
+                    workshopSuccess.insert(id, false);
+                    wss << eh << id << qs(" validate\n");
+                    wsc++;
+                }
+            } else {
+                workshopSuccess.insert(id, false);
+                dls << eh << id << qs(" validate\n");
+                wsc++;
+            }
         }
     }
 
@@ -195,18 +215,18 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
     std::unique_ptr<QObject> ctx(new QObject());
 
     int wsp = 0;
+    static const QRegularExpression successItem(qs(R"(^Success\.\sDownloaded\sitem\s(\d+)\sto)"));
     updateStatus(qs("%1 (%2/%3)").arg(updMsg).arg(wsp).arg(wsc));
-    QObject::connect(scp, &QProcess::readyRead, ctx.get(), [wsc, &wsp, &ctx] { // clazy:exclude=lambda-in-connect
+    QObject::connect(scp, &QProcess::readyRead, ctx.get(), [wsc, &wsp, &ctx, &workshopSuccess] { // clazy:exclude=lambda-in-connect
         while (scp->canReadLine()) {
             QString l = scp->readLine();
-            qDebug() << l;
-            if (l.startsWith(qs("Success. Downloaded item"))) {
+            //qDebug() << l;
+            auto m = successItem.match(l);
+            if (m.hasMatch()) {
                 wsp++;
+                workshopSuccess.insert(m.captured(1), true);
                 updateStatus(qs("%1 (%2/%3)").arg(updMsg).arg(wsp).arg(wsc));
-            } else if (l.contains("Missing decryption key") || l.contains("failed (Failure).")) {
-                ctx.reset();
-                scp->close(); // abort
-                return;
+                qDebug() << "ok" << m.captured(1);
             }
         }
     });
@@ -225,8 +245,26 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
         ev.exec();
     }
 
-    if (!ctx) { // download failure occurred
-        QMessageBox::critical(nullptr, " ", "Failed to download one or more mods. This may be due to Steam maintenance, or due to a network or steamcmd error. Please try again in a few minutes.");
+
+    QStringList workshopFailed;
+    int workshopFailedPreview = 8, j=0;
+    for (auto i = workshopSuccess.constBegin(); i != workshopSuccess.constEnd(); ++i) {
+        if (!i.value()) {
+            j++;
+            if (j <= workshopFailedPreview) {
+                const auto id = i.key();
+                const auto n = workshopNames.value(id);
+                workshopFailed << (n.isEmpty() ? id : qs("%2 - %1").arg(n, id));
+            }
+        }
+    }
+
+    if (j > workshopFailedPreview) {
+        workshopFailed << qs("...and %1 more").arg(j - workshopFailedPreview);
+    }
+
+    if (!workshopFailed.isEmpty()) { // download failure occurred
+        QMessageBox::critical(nullptr, " ", qs("Failed to download %1 of %2 mods.\nThis may be due to Steam maintenance, network issue, or steamcmd error.\nPlease try again in a few minutes.\n\n%3").arg(j).arg(wsc).arg(workshopFailed.join(qs("\n"))));
     }
 }
 
