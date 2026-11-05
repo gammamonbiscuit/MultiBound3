@@ -166,8 +166,8 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
     for (auto& id : workshop) {
         if (!workshopExclude.contains(id)) {
             if (ws && QDir(Config::workshopRoot).exists(id)) {
-                if (wsUpd) { wss << eh << id << qs("\n"); wsc++; }
-            } else {dls << eh << id << qs("\n"); wsc++; }
+                if (wsUpd) { wss << eh << id << qs(" validate\n"); wsc++; }
+            } else {dls << eh << id << qs(" validate\n"); wsc++; }
         }
     }
 
@@ -199,7 +199,7 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
     QObject::connect(scp, &QProcess::readyRead, ctx.get(), [wsc, &wsp, &ctx] { // clazy:exclude=lambda-in-connect
         while (scp->canReadLine()) {
             QString l = scp->readLine();
-            //qDebug() << l;
+            qDebug() << l;
             if (l.startsWith(qs("Success. Downloaded item"))) {
                 wsp++;
                 updateStatus(qs("%1 (%2/%3)").arg(updMsg).arg(wsp).arg(wsc));
