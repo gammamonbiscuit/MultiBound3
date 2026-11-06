@@ -247,7 +247,7 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
 
 
     QStringList workshopFailed;
-    int workshopFailedPreview = 8, j=0;
+    int workshopFailedPreview = 10, j = 0;
     for (auto i = workshopSuccess.constBegin(); i != workshopSuccess.constEnd(); ++i) {
         if (!i.value()) {
             j++;
@@ -263,7 +263,7 @@ void MultiBound::Util::updateMods(MultiBound::Instance* inst) {
         workshopFailed << qs("...and %1 more").arg(j - workshopFailedPreview);
     }
 
-    if (!workshopFailed.isEmpty()) { // download failure occurred
+    if (j > 0) { // download failure occurred
         QMessageBox::critical(nullptr, " ", qs("Failed to download %1 of %2 mods.\nThis may be due to Steam maintenance, network issue, or steamcmd error.\nPlease try again in a few minutes.\n\n%3").arg(j).arg(wsc).arg(workshopFailed.join(qs("\n"))));
     }
 }
